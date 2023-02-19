@@ -1,101 +1,145 @@
+using CheckoutKata.Core.Models;
+
 namespace CheckoutKata.Tests
 {
     public class CheckoutKataTests
     {
+        private ShoppingBasket _shoppingBasket = new ShoppingBasket();
+
+        private void LoadTestScenario(Product[] products, params Promotion[] promotions)
+        {
+            foreach (var product in products)
+            {
+                _shoppingBasket.AddProduct(product);
+            }
+
+            foreach (var promotion in promotions)
+            {
+                _shoppingBasket.AddPromotion(promotion);
+            }
+        }
+
+
         [Fact]
 
         public void Empty_Basket_Returns_Total_Zero()
         {
 
-            Assert.Equal(0, 1);
+            Assert.Equal(0, _shoppingBasket.CalculateTotalPrice());
         }
 
 
-        [Fact]
+        [Theory]
+        [MemberData(nameof(CheckoutKataMockData.InvalidProductData), MemberType = typeof(CheckoutKataMockData))]
 
-        public void Cannot_Add_Negative_Price_Item_To_Basket()
+        public void Cannot_Add_Negative_Price_Item_To_Basket(Product[] products)
         {
-            Assert.Equal(0, 1);
+            LoadTestScenario(products);
+
+            Assert.Equal(0, _shoppingBasket.CalculateTotalPrice());
         }
 
 
-        [Fact]
+        [Theory]
+        [MemberData(nameof(CheckoutKataMockData.ProductData), MemberType = typeof(CheckoutKataMockData))]
 
-        public void Individual_Products_Return_Correct_Price()
+        public void Individual_Products_Return_Correct_Price(Product product)
         {
-            Assert.Equal(0, 1);
-
+            _shoppingBasket.AddProduct(product);
+            Assert.Equal(product.UnitPrice, _shoppingBasket.CalculateTotalPrice());
         }
 
 
-        [Fact]
+        [Theory]
+        [MemberData(nameof(CheckoutKataMockData.BaseProductList), MemberType = typeof(CheckoutKataMockData))]
 
-        public void No_Promotion_Multiple_Products_Return_Correct_Price()
+        public void No_Promotion_Multiple_Products_Return_Correct_Price(Product[] products)
         {
-            Assert.Equal(0, 1);
-
+            LoadTestScenario(products);
+            decimal expected = products.Sum(x => x.UnitPrice);
+            Assert.Equal(expected, _shoppingBasket.CalculateTotalPrice());
         }
 
-        [Fact]
+        [Theory]
+        [MemberData(nameof(CheckoutKataMockData.PromotedListB), MemberType = typeof(CheckoutKataMockData))]
 
-        public void Promotion_B_Successfully_Applies()
+        public void Promotion_B_Successfully_Applies(Product[] products)
         {
-            Assert.Equal(0, 1);
-
+            LoadTestScenario(products, CheckoutKataMockData.PromoB);
+            decimal? expected = CheckoutKataMockData.PromoB.Price;
+            Assert.Equal(expected, _shoppingBasket.CalculateTotalPrice());
         }
 
-        [Fact]
+        [Theory]
+        [MemberData(nameof(CheckoutKataMockData.PromotedListD), MemberType = typeof(CheckoutKataMockData))]
 
-        public void Promotion_D_Successfully_Applies()
+        public void Promotion_D_Successfully_Applies(Product[] products)
         {
-            Assert.Equal(0, 1);
-
+            LoadTestScenario(products, CheckoutKataMockData.PromoD);
+            decimal? expected = CheckoutKataMockData.PromoD.Price;
+            Assert.Equal(expected, _shoppingBasket.CalculateTotalPrice());
         }
 
-        [Fact]
+        [Theory]
+        [MemberData(nameof(CheckoutKataMockData.MultiplePromotionsList), MemberType = typeof(CheckoutKataMockData))]
 
-        public void Multiple_Promotions_Successfully_Applies()
+        public void Multiple_Promotions_Successfully_Applies(Product[] products)
         {
-            Assert.Equal(0, 1);
-
+            LoadTestScenario(products, CheckoutKataMockData.PromoB, CheckoutKataMockData.PromoD);
+            decimal? expected = CheckoutKataMockData.PromoB.Price + CheckoutKataMockData.PromoD.Price;
+            Assert.Equal(expected, _shoppingBasket.CalculateTotalPrice());
         }
 
-        [Fact]
+        [Theory]
+        [MemberData(nameof(CheckoutKataMockData.PromotionsQuantityCheckList), MemberType = typeof(CheckoutKataMockData))]
 
-        public void Promotions_Quantity_Only_Applies_Once()
+        public void Promotions_Quantity_Only_Applies_Once(Product[] products)
         {
-            Assert.Equal(0, 1);
+            LoadTestScenario(products, CheckoutKataMockData.PromoB, CheckoutKataMockData.PromoD);
 
+            // Price of B normally: 15
+            // Price of D normally: 55
+            // BBB + DD + BB + D
+            decimal? expected = (CheckoutKataMockData.PromoB.Price + CheckoutKataMockData.PromoD.Price) + (CheckoutKataMockData.B.UnitPrice * 2) + (CheckoutKataMockData.D.UnitPrice);
+            Assert.Equal(expected, _shoppingBasket.CalculateTotalPrice());
         }
 
-        [Fact]
+        [Theory]
+        [MemberData(nameof(CheckoutKataMockData.PromotionsTwiceList), MemberType = typeof(CheckoutKataMockData))]
 
-        public void Promotions_Quantity_Applies_Twice()
+        public void Promotions_Quantity_Applies_Twice(Product[] products)
         {
-            Assert.Equal(0, 1);
-
+            LoadTestScenario(products, CheckoutKataMockData.PromoB, CheckoutKataMockData.PromoD);
+            decimal? expected = (CheckoutKataMockData.PromoB.Price + CheckoutKataMockData.PromoD.Price) * 2;
+            Assert.Equal(expected, _shoppingBasket.CalculateTotalPrice());
         }
 
-        [Fact]
+        [Theory]
+        [MemberData(nameof(CheckoutKataMockData.BaseCaseOneData), MemberType = typeof(CheckoutKataMockData))]
 
-        public void Normal_Customer_Base_Case_One()
+        public void Normal_Customer_Base_Case_One(Product[] products)
         {
-            Assert.Equal(0, 1);
-
+            LoadTestScenario(products, CheckoutKataMockData.PromoB, CheckoutKataMockData.PromoD);
+            decimal? expected = (CheckoutKataMockData.PromoB.Price + CheckoutKataMockData.PromoD.Price) * 2;
+            Assert.Equal(182.5m, _shoppingBasket.CalculateTotalPrice());
         }
 
-        [Fact]
-        public void Normal_Customer_Base_Case_Two()
+        [Theory]
+        [MemberData(nameof(CheckoutKataMockData.BaseCaseTwoData), MemberType = typeof(CheckoutKataMockData))]
+        public void Normal_Customer_Base_Case_Two(Product[] products)
         {
-            Assert.Equal(0, 1);
-
+            LoadTestScenario(products, CheckoutKataMockData.PromoB, CheckoutKataMockData.PromoD);
+            decimal? expected = (CheckoutKataMockData.PromoB.Price + CheckoutKataMockData.PromoD.Price) * 2;
+            Assert.Equal(235, _shoppingBasket.CalculateTotalPrice());
         }
 
-        [Fact]
-        public void Normal_Customer_Base_Case_Three()
+        [Theory]
+        [MemberData(nameof(CheckoutKataMockData.BaseCaseThreeData), MemberType = typeof(CheckoutKataMockData))]
+        public void Normal_Customer_Base_Case_Three(Product[] products)
         {
-            Assert.Equal(0, 1);
-
+            LoadTestScenario(products, CheckoutKataMockData.PromoB, CheckoutKataMockData.PromoD);
+            decimal? expected = (CheckoutKataMockData.PromoB.Price + CheckoutKataMockData.PromoD.Price) * 2;
+            Assert.Equal(240, _shoppingBasket.CalculateTotalPrice());
         }
     }
 }
