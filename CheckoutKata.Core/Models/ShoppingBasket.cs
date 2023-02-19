@@ -1,4 +1,6 @@
-﻿namespace CheckoutKata.Core.Models
+﻿using CheckoutKata.Core.Helpers;
+
+namespace CheckoutKata.Core.Models
 {
     public class ShoppingBasket
     {
@@ -7,15 +9,23 @@
 
         private decimal _TotalPrice { get; set; }
 
-
-
         public void AddProduct(Product product)
         {
+            if (ValidateSkuHelper.ValidateSKU(product) is null)
+            {
+                return;
+            }
+
             _Products.Add(product);
         }
 
         public void AddPromotion(Promotion promotion)
         {
+            if (ValidateSkuHelper.ValidateSKU(promotion) is null)
+            {
+                return;
+            }
+
             _Promotions.Add(promotion);
         }
 
