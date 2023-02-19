@@ -49,13 +49,51 @@ namespace CheckoutKata.Core.Models
 
         public decimal CalculateTotalPrice()
         {
-            throw new NotImplementedException();
+            if (_Products.Any() == false)
+            {
+                _TotalPrice = 0;
+                return _TotalPrice;
+            }
+
+            _TotalPrice = _Products.Sum(item => item.UnitPrice);
+
+            if (_Promotions.Any() == false)
+            {
+                return _TotalPrice;
+            }
+
+            HashSet<Product> removeDuplicateSKU = new HashSet<Product>(new UniqueProducts());
+            foreach (var product in _Products)
+            {
+                removeDuplicateSKU.Add(product);
+            }
+            decimal PromotionDiscount = removeDuplicateSKU.Sum(CalculatePromotionPrice);
+
+            return _TotalPrice - PromotionDiscount;
         }
 
         public decimal CalculatePromotionPrice(Product product)
         {
-            throw new NotImplementedException();
+            int getBasketItemCount = _Products.Count(p => p.SKU == product.SKU);
 
+            // Already did the null check for promotion before so we know a promotion exists
+            Promotion? findRelevantPromotion = _Promotions.SingleOrDefault(promo => promo.SKU == product.SKU)!;
+
+            if (findRelevantPromotion is null)
+            {
+                return 0;
+            }
+
+            var normalTotal = (getBasketItemCount - (getBasketItemCount % findRelevantPromotion.Quantity)) * product.UnitPrice;
+            var totalWithPromotionsApplied = (getBasketItemCount / findRelevantPromotion.Quantity * findRelevantPromotion.Price)!;
+            var priceSavedWithPromotions = normalTotal - totalWithPromotionsApplied;
+
+            if (priceSavedWithPromotions <= 0)
+            {
+                return 0;
+            }
+
+            return (decimal)priceSavedWithPromotions!;
         }
 
 
